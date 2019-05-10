@@ -26,6 +26,7 @@ if ($article_result->num_rows != 0) {
 $sitemapOption = array(
     'version' => '1.0',
     'charset' => 'UTF-8',
+    //Just enter the url, it will escape specific word automatically
     'data_url' => 'https://example.com/article.php?id=',
     'xml_filename' => 'sitemap.xml'
 );

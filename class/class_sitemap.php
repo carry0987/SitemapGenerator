@@ -28,6 +28,7 @@ class SitemapGenerator
         $this->appendChild($xml);
         foreach ($result as $var) {
             $var['loc'] = $this->setURL($var['loc'], self::$options['data_url']);
+            $var['loc'] = htmlentities($var['loc']);
             $var['lastmod'] = $this->trimLastmod($var['lastmod']);
             $item = $this->createElement('url');
             $xml->appendChild($item);
