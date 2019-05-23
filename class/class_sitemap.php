@@ -8,39 +8,46 @@ class SitemapGenerator
     {
         if (isset($option)) {
             self::$options = $option;
-            //Initialize DOMDocument class
             if (!self::$document) {
                 self::$document = new DOMDocument(self::$options['version'], self::$options['charset']);
                 self::$document->formatOutput = true;
                 self::$document->preserveWhiteSpace = false;
+                //Generate the urlset once
+                $this->addurlset();
             }
         } else {
             return 'Could not find option';
         }
     }
 
-
-    public function generateXML($result)
+    //Generate the root node - urlset
+    private function addurlset()
     {
-        $xml = $this->createElement('urlset');
-        //Set the attributes.
-        $xml->setAttribute('xmlns', 'http://www.sitemaps.org/schemas/sitemap/0.9');
-        $this->appendChild($xml);
-        foreach ($result as $var) {
-            $var['loc'] = $this->setURL($var['loc'], self::$options['data_url']);
-            $var['loc'] = htmlentities($var['loc']);
-            $var['lastmod'] = $this->trimLastmod($var['lastmod']);
-            $item = $this->createElement('url');
-            $xml->appendChild($item);
-            $this->createItem($item, $var);
-        }
-        $this->saveFile(self::$options['xml_filename']);
-        $this->saveXML();
+        $urlset = $this->createElement('urlset');
+        $urlset->setAttribute('xmlns', 'http://www.sitemaps.org/schemas/sitemap/0.9');
+        $this->appendChild($urlset);
     }
 
-    private function setURL($get_url, $set_url)
+    //Add item to xml
+    public function addSitemapNode($result = array())
     {
-        return $set_url.$get_url;
+        if (!empty($result) && is_array($result)) {
+            $get_urlset = self::$document->getElementsByTagName('urlset');
+            $urlset = $get_urlset[0];
+            foreach ($result as $var) {
+                $var['loc'] = htmlentities($var['loc']);
+                $var['lastmod'] = $this->trimLastmod($var['lastmod']);
+                $item = $this->createElement('url');
+                $urlset->appendChild($item);
+                $this->createItem($item, $var);
+            }
+        }
+    }
+
+    public function generateXML()
+    {
+        $this->saveFile(self::$options['xml_filename']);
+        $this->saveXML();
     }
 
     private function trimLastmod($value)
@@ -53,13 +60,13 @@ class SitemapGenerator
     {
         return self::$document->createElement($element);
     }
-    
+
     //Append child node
     private function appendChild($child)
     {
         return self::$document->appendChild($child);
     }
-    
+
     //Add item
     private function createItem($item, $data, $attribute = array())
     {
