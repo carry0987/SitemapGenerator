@@ -3,6 +3,7 @@ class SitemapGenerator
 {
     public static $document = null;
     private static $options = array();
+    const DIR_SEP = DIRECTORY_SEPARATOR;
 
     public function __construct($option = array())
     {
@@ -18,6 +19,11 @@ class SitemapGenerator
         } else {
             return 'Could not find option';
         }
+    }
+
+    private function trimPath($path)
+    {
+        return str_replace(array('/', '\\', '//', '\\\\'), self::DIR_SEP, $path);
     }
 
     //Generate the root node - urlset
@@ -46,7 +52,8 @@ class SitemapGenerator
 
     public function generateXML()
     {
-        $this->saveFile(self::$options['xml_filename']);
+        $file_path = $this->trimPath(self::$options['xml_file']);
+        $this->saveFile($file_path);
         $this->saveXML();
     }
 
@@ -114,6 +121,7 @@ class SitemapGenerator
     //Load xml file
     public function loadSitemap($fpath)
     {
+        $fpath = $this->trimPath($fpath);
         if (!file_exists($fpath)) {
             exit($fpath.' is a invalid file');
         }
