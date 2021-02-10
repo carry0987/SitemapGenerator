@@ -50,13 +50,6 @@ class SitemapGenerator
         }
     }
 
-    public function generateXML()
-    {
-        $file_path = $this->trimPath(self::$options['xml_file']);
-        $this->saveFile($file_path);
-        $this->saveXML();
-    }
-
     private function trimLastMod($value)
     {
         return date('c', strtotime($value));
@@ -100,6 +93,14 @@ class SitemapGenerator
         }
     }
 
+    //Generate XML file
+    public function generateXML()
+    {
+        $file_path = $this->trimPath(self::$options['xml_file']);
+        $this->saveFile($file_path);
+        $this->saveXML();
+    }
+    
     //Return xml string
     private function saveXML()
     {
