@@ -42,7 +42,7 @@ class SitemapGenerator
             $urlset = $get_urlset[0];
             foreach ($result as $var) {
                 $var['loc'] = htmlentities($var['loc']);
-                $var['lastmod'] = $this->trimLastmod($var['lastmod']);
+                $var['lastmod'] = $this->trimLastMod($var['lastmod']);
                 $item = $this->createElement('url');
                 $urlset->appendChild($item);
                 $this->createItem($item, $var);
@@ -57,7 +57,7 @@ class SitemapGenerator
         $this->saveXML();
     }
 
-    private function trimLastmod($value)
+    private function trimLastMod($value)
     {
         return date('c', strtotime($value));
     }
