@@ -14,7 +14,7 @@ class SitemapGenerator
                 self::$document->formatOutput = true;
                 self::$document->preserveWhiteSpace = false;
                 //Generate the urlset once
-                $this->addurlset();
+                $this->addUrlset();
             }
         } else {
             return 'Could not find option';
@@ -27,7 +27,7 @@ class SitemapGenerator
     }
 
     //Generate the root node - urlset
-    private function addurlset()
+    private function addUrlset()
     {
         $urlset = $this->createElement('urlset');
         $urlset->setAttribute('xmlns', 'http://www.sitemaps.org/schemas/sitemap/0.9');
