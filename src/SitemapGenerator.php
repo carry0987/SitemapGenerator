@@ -19,7 +19,7 @@ class SitemapGenerator
                 $this->addUrlset();
             }
         } else {
-            return 'Could not find option';
+            throw new \InvalidArgumentException('Could not find option');
         }
     }
 
@@ -32,18 +32,23 @@ class SitemapGenerator
     }
 
     //Add item to xml
-    public function addSitemapNode($result = array())
+    public function addSitemapNode(array $result = array())
     {
-        if (!empty($result) && is_array($result)) {
-            $get_urlset = self::$document->getElementsByTagName('urlset');
-            $urlset = $get_urlset[0];
+        if (!empty($result)) {
             foreach ($result as $var) {
+                if (!isset($var['loc']) || !isset($var['lastmod'])) {
+                    throw new \InvalidArgumentException('Missing loc or lastmod key in result array');
+                }
+                $get_urlset = self::$document->getElementsByTagName('urlset');
+                $urlset = $get_urlset[0];
                 $var['loc'] = htmlentities($var['loc']);
                 $var['lastmod'] = $this->trimLastMod($var['lastmod']);
                 $item = $this->createElement('url');
                 $urlset->appendChild($item);
                 $this->createItem($item, $var);
             }
+        } else {
+            throw new \InvalidArgumentException('Invalid result array provided');
         }
     }
 
@@ -65,28 +70,29 @@ class SitemapGenerator
     }
 
     //Add item
-    private function createItem($item, $data, $attribute = array())
+    private function createItem($item, array $data, $attribute = array())
     {
-        if (is_array($data)) {
-            foreach ($data as $key => $val) {
-                //Create an element, the element name cannot begin with a number
-                is_numeric($key[0]) && exit($key.' Error: First char cannot be a number');
-                $temp = self::$document->createElement($key);
-                $item->appendChild($temp);
-                //Add element value
-                $text = self::$document->createTextNode($val);
-                $temp->appendChild($text);
-                if (isset($attribute[$key])) {
-                    foreach ($attribute[$key] as $akey => $row) {
-                        //Create attribute node
-                        $temps = self::$document->createAttribute($akey);
-                        $temp->appendChild($temps);
-                        //Create attribute value node
-                        $aval = self::$document->createTextNode($row);
-                        $temps->appendChild($aval);
-                    }
-                } 
-            }
+        foreach ($data as $key => $val) {
+            //Create an element, the element name cannot begin with a number
+            is_numeric($key[0]) && exit($key.' Error: First char cannot be a number');
+            $temp = self::$document->createElement($key);
+            $item->appendChild($temp);
+            //Add element value
+            $text = self::$document->createTextNode($val);
+            $temp->appendChild($text);
+            if (isset($attribute[$key])) {
+                if (!is_array($attribute[$key])) {
+                    throw new \InvalidArgumentException('Attributes must be passed in an array');
+                }
+                foreach ($attribute[$key] as $akey => $row) {
+                    //Create attribute node
+                    $temps = self::$document->createAttribute($akey);
+                    $temp->appendChild($temps);
+                    //Create attribute value node
+                    $aval = self::$document->createTextNode($row);
+                    $temps->appendChild($aval);
+                }
+            } 
         }
     }
 
@@ -117,8 +123,12 @@ class SitemapGenerator
     public function generateXML()
     {
         $file_path = self::trimPath(self::$options['xml_file']);
-        $this->saveFile($file_path);
-        $this->saveXML();
+        if ($this->saveFile($file_path)) {
+            $this->saveXML();
+            return true;
+        } else {
+            throw new \Exception('Failed to save file');
+        }
     }
 
     //Load xml file
@@ -126,7 +136,7 @@ class SitemapGenerator
     {
         $fpath = self::trimPath($fpath);
         if (!file_exists($fpath)) {
-            exit($fpath.' is a invalid file');
+            throw new \Exception($fpath.' is a invalid file');
         }
         //Returns TRUE on success, or FALSE on failure
         self::$document->load($fpath);
