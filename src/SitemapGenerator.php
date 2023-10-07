@@ -1,4 +1,6 @@
 <?php
+namespace carry0987\Sitemap;
+
 class SitemapGenerator
 {
     public static $document = null;
@@ -10,7 +12,7 @@ class SitemapGenerator
         if (isset($option)) {
             self::$options = $option;
             if (!self::$document) {
-                self::$document = new DOMDocument(self::$options['version'], self::$options['charset']);
+                self::$document = new \DOMDocument(self::$options['version'], self::$options['charset']);
                 self::$document->formatOutput = true;
                 self::$document->preserveWhiteSpace = false;
                 //Generate the urlset once
@@ -19,11 +21,6 @@ class SitemapGenerator
         } else {
             return 'Could not find option';
         }
-    }
-
-    private function trimPath($path)
-    {
-        return str_replace(array('/', '\\', '//', '\\\\'), self::DIR_SEP, $path);
     }
 
     //Generate the root node - urlset
@@ -73,7 +70,7 @@ class SitemapGenerator
         if (is_array($data)) {
             foreach ($data as $key => $val) {
                 //Create an element, the element name cannot begin with a number
-                is_numeric($key{0}) && exit($key.' Error: First char cannot be a number');
+                is_numeric($key[0]) && exit($key.' Error: First char cannot be a number');
                 $temp = self::$document->createElement($key);
                 $item->appendChild($temp);
                 //Add element value
@@ -93,14 +90,6 @@ class SitemapGenerator
         }
     }
 
-    //Generate XML file
-    public function generateXML()
-    {
-        $file_path = $this->trimPath(self::$options['xml_file']);
-        $this->saveFile($file_path);
-        $this->saveXML();
-    }
-    
     //Return xml string
     private function saveXML()
     {
@@ -119,10 +108,23 @@ class SitemapGenerator
         }
     }
 
+    private static function trimPath($path)
+    {
+        return str_replace(array('/', '\\', '//', '\\\\'), self::DIR_SEP, $path);
+    }
+
+    //Generate XML file
+    public function generateXML()
+    {
+        $file_path = self::trimPath(self::$options['xml_file']);
+        $this->saveFile($file_path);
+        $this->saveXML();
+    }
+
     //Load xml file
     public function loadSitemap($fpath)
     {
-        $fpath = $this->trimPath($fpath);
+        $fpath = self::trimPath($fpath);
         if (!file_exists($fpath)) {
             exit($fpath.' is a invalid file');
         }
