@@ -1,62 +1,58 @@
 <?php
 namespace carry0987\Sitemap;
 
+use PDO;
+use PDOException;
+
 class DBController
 {
-    private $connectDB = null;
+    private $PDO = null;
 
     public function connectDB(string $host, string $user, string $password, string $database, int $port = 3306)
     {
+        $dsn = "mysql:host=$host;dbname=$database;port=$port;charset=utf8mb4";
+
         try {
-            mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
-            //Handle Exception of MySQLi
-            $driver = new \mysqli_driver();
-            $driver->report_mode = MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT;
-            $this->connectDB = new \mysqli($host, $user, $password, $database, $port);
-            $this->mysqli_version = $this->connectDB->server_info;
-            $this->connectDB->set_charset('utf8mb4');
-            return $this->connectDB;
-        } catch (\mysqli_sql_exception $e) {
-            echo $this->throwDBError($e->getMessage(), $e->getCode());
+            $this->PDO = new PDO($dsn, $user, $password);
+            $this->PDO->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        } catch (PDOException $e) {
+            echo self::throwDBError($e->getMessage(), $e->getCode());
             exit();
         }
     }
 
-    public function setConnection(\mysqli $connectDB)
+    public function setConnection(PDO $PDO)
     {
-        $this->connectDB = $connectDB;
+        $this->PDO = $PDO;
     }
 
     public function getConnection()
     {
-        return $this->connectDB;
+        return $this->PDO;
     }
 
-    public function getArticle()
+    public function getArticle(): array
     {
-        $results = array();
         $query = 'SELECT id, freq, priority, lastmod FROM article';
-        $stmt = $this->connectDB->stmt_init();
+
         try {
-            $stmt->prepare($query);
-            $stmt->execute();
-            $stmt->bind_result($id, $freq, $priority, $lastmod);
-            $result = $stmt->get_result();
-            if ($result->num_rows != 0) {
-                while ($row = $result->fetch_assoc()) {
-                    $results[] = array(
-                        //Just enter the url, it will escape specific word automatically
-                        'loc' => 'https://example.com/article.php?test=yes&aid='.$row['id'],
-                        'lastmod' => $row['lastmod'],
-                        'changefreq' => $row['freq'],
-                        'priority' => $row['priority']
-                    );
-                }
+            $stmt = $this->PDO->query($query);
+            $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            $stmt = null; // closes the cursor and frees the connection to the server so that other SQL statements may be issued,
+
+            foreach ($results as $key => $row) {
+                //Just enter the url, it will escape specific word automatically
+                $results[$key]['loc'] = 'https://example.com/article.php?test=yes&aid='.$row['id'];
+                $results[$key]['lastmod'] = $row['lastmod'];
+                $results[$key]['changefreq'] = $row['freq'];
+                $results[$key]['priority'] = $row['priority'];
             }
+    
             return $results;
-        } catch (\mysqli_sql_exception $e) {
+        } catch (PDOException $e) {
             echo self::throwDBError($e->getMessage(), $e->getCode());
-            return false;
+            return [];
         }
     }
 
